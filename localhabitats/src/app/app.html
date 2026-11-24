@@ -1,0 +1,220 @@
+<header class="site-header">
+  <a class="brand" href="#" aria-label="Localhabitats, accueil">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 40 40" fill="none">
+        <path d="M5 18.5 20 6l15 12.5v16H5v-16Z" />
+        <path d="M15 34.5V23h10v11.5" />
+        <path d="m2.5 19 17.5-15L37.5 19" />
+      </svg>
+    </span>
+    <span>local<span class="brand-light">habitats</span></span>
+  </a>
+
+  <nav class="main-nav" aria-label="Navigation principale">
+    <a href="#annonces">Les logements</a>
+    <a href="#engagements">Notre approche</a>
+  </nav>
+
+  <button
+    class="favorites-nav"
+    type="button"
+    [class.is-active]="favoritesOnly()"
+    [attr.aria-pressed]="favoritesOnly()"
+    (click)="favoritesOnly.set(!favoritesOnly())"
+  >
+    <span aria-hidden="true">♡</span>
+    <span>Mes favoris</span>
+    @if (favorites().length > 0) {
+      <span class="favorite-count">{{ favorites().length }}</span>
+    }
+  </button>
+</header>
+
+<main>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-content">
+      <p class="eyebrow hero-eyebrow"><span></span> Trouvez votre chez-vous</p>
+      <h1 id="hero-title">Un lieu à soi.<br />Une vie qui vous ressemble.</h1>
+      <p class="hero-copy">Des logements choisis avec soin, pour les histoires qui commencent.</p>
+    </div>
+
+    <form
+      class="search-panel"
+      aria-label="Rechercher un logement"
+      (submit)="$event.preventDefault()"
+    >
+      <label class="search-field location-field">
+        <span class="field-label">Où souhaitez-vous vivre ?</span>
+        <span class="field-control">
+          <span class="field-icon" aria-hidden="true">⌖</span>
+          <input
+            type="search"
+            placeholder="Ville, quartier..."
+            aria-label="Ville, quartier ou nom du logement"
+            [value]="locationQuery()"
+            (input)="setLocation($event)"
+          />
+        </span>
+      </label>
+
+      <label class="search-field">
+        <span class="field-label">Votre budget mensuel</span>
+        <span class="field-control">
+          <span class="field-icon price-icon" aria-hidden="true">€</span>
+          <select
+            aria-label="Budget mensuel maximum"
+            [value]="maxPrice()"
+            (change)="setMaxPrice($event)"
+          >
+            <option value="0">Sans limite</option>
+            <option value="900">Jusqu’à 900 €</option>
+            <option value="1200">Jusqu’à 1 200 €</option>
+            <option value="1500">Jusqu’à 1 500 €</option>
+          </select>
+        </span>
+      </label>
+
+      <a class="search-button" href="#annonces"> Explorer <span aria-hidden="true">↗</span> </a>
+    </form>
+
+    <div class="hero-note">
+      <span class="note-avatars" aria-hidden="true"><i>J</i><i>M</i><i>A</i></span>
+      <span>Déjà adopté par des milliers de locataires</span>
+    </div>
+  </section>
+
+  <section class="listings-section" id="annonces" aria-labelledby="listings-title">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Des lieux, des histoires</p>
+        <h2 id="listings-title">Le coup de cœur est peut-être ici.</h2>
+      </div>
+      <p class="results-count">
+        <strong class="font-bold">{{ filteredListings().length }}</strong>
+        {{ filteredListings().length > 1 ? 'logements à découvrir' : 'logement à découvrir' }}
+      </p>
+    </div>
+
+    <div class="listing-toolbar">
+      <div class="filter-tabs" role="group" aria-label="Filtrer par type de logement">
+        @for (type of propertyTypes; track type) {
+          <button
+            type="button"
+            [class.selected]="propertyFilter() === type"
+            [attr.aria-pressed]="propertyFilter() === type"
+            (click)="propertyFilter.set(type)"
+          >
+            {{ type }}
+          </button>
+        }
+      </div>
+      <button
+        class="saved-filter"
+        type="button"
+        [class.selected]="favoritesOnly()"
+        [attr.aria-pressed]="favoritesOnly()"
+        (click)="favoritesOnly.set(!favoritesOnly())"
+      >
+        <span aria-hidden="true">♡</span> Voir mes favoris
+      </button>
+    </div>
+
+    @if (filteredListings().length > 0) {
+      <div class="listing-grid">
+        @for (listing of filteredListings(); track listing.id) {
+          <article class="listing-card">
+            <div class="listing-image-wrap">
+              <img class="listing-image" [src]="listing.image" [alt]="listing.imageAlt" />
+              @if (listing.tag) {
+                <span class="listing-tag">{{ listing.tag }}</span>
+              }
+              <button
+                class="favorite-button"
+                type="button"
+                [class.is-favorite]="favorites().includes(listing.id)"
+                [attr.aria-label]="
+                  favorites().includes(listing.id)
+                    ? 'Retirer ' + listing.title + ' des favoris'
+                    : 'Ajouter ' + listing.title + ' aux favoris'
+                "
+                [attr.aria-pressed]="favorites().includes(listing.id)"
+                (click)="toggleFavorite(listing.id)"
+              >
+                {{ favorites().includes(listing.id) ? '♥' : '♡' }}
+              </button>
+            </div>
+            <div class="listing-details">
+              <div class="listing-title-row">
+                <div>
+                  <p class="listing-location">{{ listing.area }} · {{ listing.city }}</p>
+                  <h3>{{ listing.title }}</h3>
+                </div>
+                <p class="listing-price">
+                  {{ listing.price | currency: 'EUR' : 'symbol' : '1.0-0' : 'fr-FR' }}
+                  <span>/ mois</span>
+                </p>
+              </div>
+              <div class="listing-meta">
+                <span>{{ listing.type }}</span>
+                <span>{{ listing.rooms }} pièces</span>
+                <span>{{ listing.size }} m²</span>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <span class="empty-icon" aria-hidden="true">⌂</span>
+        <h3>Aucun logement ne correspond à votre recherche</h3>
+        <p>Essayez une autre ville ou élargissez vos critères.</p>
+        <button class="reset-button" type="button" (click)="resetFilters()">
+          Effacer les filtres
+        </button>
+      </div>
+    }
+  </section>
+
+  <section class="promise-section" id="engagements" aria-labelledby="promise-title">
+    <div class="promise-intro">
+      <p class="eyebrow">Habiter autrement</p>
+      <h2 id="promise-title">Le logement, c’est plus qu’une adresse.</h2>
+      <p>
+        On croit aux lieux où l’on se sent bien, aux échanges simples et aux choix qui font du bien
+        au quotidien.
+      </p>
+    </div>
+    <div class="promise-items">
+      <article>
+        <span class="promise-number">01</span>
+        <h3>Une recherche claire</h3>
+        <p>Les critères utiles et le loyer mensuel sont visibles dès le premier coup d’œil.</p>
+      </article>
+      <article>
+        <span class="promise-number">02</span>
+        <h3>Des lieux qui ont une âme</h3>
+        <p>Du studio de quartier à la maison de famille, il y a une place pour chaque histoire.</p>
+      </article>
+      <article>
+        <span class="promise-number">03</span>
+        <h3>Un choix plus humain</h3>
+        <p>Nous mettons en avant des logements et des rencontres avant de simples mètres carrés.</p>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <a class="brand footer-brand" href="#" aria-label="Localhabitats, accueil">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 40 40" fill="none">
+        <path d="M5 18.5 20 6l15 12.5v16H5v-16Z" />
+        <path d="M15 34.5V23h10v11.5" />
+        <path d="m2.5 19 17.5-15L37.5 19" />
+      </svg>
+    </span>
+    <span>local<span class="brand-light">habitats</span></span>
+  </a>
+  <p>Des lieux pour se sentir chez soi.</p>
+  <a href="#annonces">Trouver un logement <span aria-hidden="true">↑</span></a>
+</footer>
